@@ -1,0 +1,14 @@
+modules = ["python-3.11"]
+
+[nix]
+
+[workflows]
+
+[[workflows.workflow]]
+name = "Start Bot"
+mode = "sequential"
+author = 65518583
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python bot.py"

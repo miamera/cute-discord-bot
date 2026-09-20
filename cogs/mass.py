@@ -90,7 +90,7 @@ def is_mass_ticket(
     if (
         channel.category_id
         == MASS_TICKET_CATEGORY_ID
-        and channel.name.lower().startswith("m ")
+        and channel.name.lower().startswith("m")
     ):
         return True
 

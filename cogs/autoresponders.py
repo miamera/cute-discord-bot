@@ -2290,13 +2290,18 @@ class AutoResponders(commands.Cog):
                 )
 
                 if mode == "random":
+                    # Random mode still chooses one response entry.
                     response_text = random.choice(
                         responses
                     )
                     send_mode = "send"
 
                 else:
-                    response_text = responses[0]
+                    # Send/reply modes now send every response line
+                    # together, preserving the line breaks.
+                    response_text = "\n".join(
+                        responses
+                    )
                     send_mode = mode
 
                 response_text = replace(

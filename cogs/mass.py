@@ -113,7 +113,7 @@ class MassInfoModal(discord.ui.Modal):
         owner_id: int,
     ):
         super().__init__(
-            title="♡ mass details"
+            title="â¡ mass details"
         )
 
         self.sep_time = sep_time
@@ -225,16 +225,12 @@ class MassInfoModal(discord.ui.Modal):
                 pass
 
         await interaction.followup.send(
-            f"{SPARK} mass details sent + pinned ♡",
+            f"{SPARK} mass details sent + pinned â¡",
             ephemeral=True,
         )
 
-        start_view = MassStartView(
-            owner_id=self.owner_id
-        )
-
         await channel.send(
-            view=start_view
+            view=MassStartView()
         )
 
 
@@ -254,19 +250,19 @@ class SepTimeSelect(
                 label="batch",
                 value="batch",
                 description="batch separation",
-                emoji="♡",
+                emoji="â¡",
             ),
             discord.SelectOption(
                 label="2h",
                 value="2h",
                 description="2 hour separation",
-                emoji="♡",
+                emoji="â¡",
             ),
             discord.SelectOption(
                 label="5h",
                 value="5h",
                 description="5 hour separation",
-                emoji="♡",
+                emoji="â¡",
             ),
         ]
 
@@ -277,25 +273,25 @@ class SepTimeSelect(
                         label="10h",
                         value="10h",
                         description="10 hour separation",
-                        emoji="୨୧",
+                        emoji="à­¨à­§",
                     ),
                     discord.SelectOption(
                         label="20h",
                         value="20h",
                         description="20 hour separation",
-                        emoji="୨୧",
+                        emoji="à­¨à­§",
                     ),
                     discord.SelectOption(
                         label="30h",
                         value="30h",
                         description="30 hour separation",
-                        emoji="୨୧",
+                        emoji="à­¨à­§",
                     ),
                 ]
             )
 
         super().__init__(
-            placeholder="୨୧ choose sep time...",
+            placeholder="à­¨à­§ choose sep time...",
             options=options,
             min_values=1,
             max_values=1,
@@ -360,19 +356,15 @@ class MassSetupView(
 class MassStartView(
     discord.ui.View
 ):
-    def __init__(
-        self,
-        owner_id: int,
-    ):
+    def __init__(self):
         super().__init__(
             timeout=None
         )
 
-        self.owner_id = owner_id
-
     @discord.ui.button(
-        label="♡ start",
+        label="â¡ start",
         style=discord.ButtonStyle.success,
+        custom_id="mass:start",
     )
     async def start(
         self,
@@ -387,8 +379,7 @@ class MassStartView(
             return
 
         if (
-            interaction.user.id
-            != self.owner_id
+            not is_ticket_user(interaction)
             and not interaction.user.guild_permissions.manage_channels
         ):
             await interaction.response.send_message(
@@ -474,6 +465,11 @@ class Mass(commands.Cog):
     ):
         self.bot = bot
 
+    async def cog_load(self):
+        self.bot.add_view(
+            MassStartView()
+        )
+
     @app_commands.command(
         name="mass",
         description="Start the Mass process."
@@ -482,58 +478,102 @@ class Mass(commands.Cog):
         self,
         interaction: discord.Interaction,
     ):
-        if not is_mass_ticket(
-            interaction
-        ):
-            await interaction.response.send_message(
-                f"{BUTTERFLY} `/mass` can only be used inside a Mass ticket.",
+        # Acknowledge immediately so Discord does not time out
+        # while the setup view is being prepared.
+        await interaction.response.defer(
+            ephemeral=True
+        )
+
+        try:
+            if not is_mass_ticket(interaction):
+                await interaction.followup.send(
+                    f"{BUTTERFLY} `/mass` can only be used inside a Mass ticket.",
+                    ephemeral=True,
+                )
+                return
+
+            if (
+                not is_ticket_user(interaction)
+                and not interaction.user.guild_permissions.manage_channels
+            ):
+                await interaction.followup.send(
+                    f"{BUTTERFLY} only the ticket user or staff can use this.",
+                    ephemeral=True,
+                )
+                return
+
+            ticket = get_current_ticket(
+                interaction.channel.id
+            )
+
+            # If staff runs /mass, use the ticket opener's level,
+            # not the staff member's level.
+            level_user_id = interaction.user.id
+
+            if ticket and ticket.get("user_id"):
+                try:
+                    level_user_id = int(
+                        ticket.get("user_id")
+                    )
+                except (
+                    TypeError,
+                    ValueError,
+                ):
+                    pass
+
+            level = get_mass_level(
+                level_user_id
+            )
+
+            extra = (
+                "\n\nà­¨à­§ **level 5+ unlocked:** "
+                "`10h` â¢ `20h` â¢ `30h`"
+                if level >= 5
+                else ""
+            )
+
+            embed = discord.Embed(
+                title="à­¨à­§ â¡ mass setup â¡ à­¨à­§",
+                description=(
+                    "âËâ¹â¡âËâ¹â¡âËâ¹â¡âËâ¹\n\n"
+                    "choose your separation time below.\n\n"
+                    "**available:**\n"
+                    "â¡ `batch`\n"
+                    "â¡ `2h`\n"
+                    "â¡ `5h`"
+                    f"{extra}\n\n"
+                    f"your level: **{level}/5**"
+                ),
+                color=0xFF9FCC,
+            )
+
+            await interaction.followup.send(
+                embed=embed,
+                view=MassSetupView(
+                    owner_id=interaction.user.id,
+                    level=level,
+                ),
                 ephemeral=True,
             )
-            return
 
-        if not is_ticket_user(
-            interaction
-        ) and not interaction.user.guild_permissions.manage_channels:
-            await interaction.response.send_message(
-                f"{BUTTERFLY} only the ticket user or staff can use this.",
-                ephemeral=True,
+        except Exception as error:
+            print(
+                f"/mass error: "
+                f"{type(error).__name__}: {error}"
             )
-            return
 
-        level = get_mass_level(
-            interaction.user.id
-        )
+            try:
+                await interaction.followup.send(
+                    f"{BUTTERFLY} something went wrong while opening the Mass setup. "
+                    f"Check the Railway logs for `/mass error`.",
+                    ephemeral=True,
+                )
+            except (
+                discord.HTTPException,
+                discord.NotFound,
+            ):
+                pass
 
-        extra = (
-            "\n\n୨୧ **level 5+ unlocked:** "
-            "`10h` • `20h` • `30h`"
-            if level >= 5
-            else ""
-        )
-
-        embed = discord.Embed(
-            title="୨୧ ♡ mass setup ♡ ୨୧",
-            description=(
-                "₊˚⊹♡₊˚⊹♡₊˚⊹♡₊˚⊹\n\n"
-                "choose your separation time below.\n\n"
-                "**available:**\n"
-                "♡ `batch`\n"
-                "♡ `2h`\n"
-                "♡ `5h`"
-                f"{extra}\n\n"
-                f"your level: **{level}/5**"
-            ),
-            color=0xFF9FCC,
-        )
-
-        await interaction.response.send_message(
-            embed=embed,
-            view=MassSetupView(
-                owner_id=interaction.user.id,
-                level=level,
-            ),
-            ephemeral=True,
-        )
 
 
 async def setup(

@@ -122,7 +122,7 @@ class MassInfoModal(discord.ui.Modal):
         owner_id: int,
     ):
         super().__init__(
-            title="â¡ mass details"
+            title="𓏲     ﹕  details"
         )
 
         self.sep_time = sep_time
@@ -130,7 +130,7 @@ class MassInfoModal(discord.ui.Modal):
 
         self.ad = discord.ui.TextInput(
             label="ad",
-            placeholder="paste the ad here...",
+            placeholder="♡ paste the ad here...",
             style=discord.TextStyle.paragraph,
             required=True,
             max_length=2000,
@@ -138,7 +138,7 @@ class MassInfoModal(discord.ui.Modal):
 
         self.reqs = discord.ui.TextInput(
             label="reqs",
-            placeholder="paste the requirements here...",
+            placeholder="♡ paste reqs here...",
             style=discord.TextStyle.paragraph,
             required=True,
             max_length=2000,
@@ -234,8 +234,8 @@ class MassInfoModal(discord.ui.Modal):
                 pass
 
         await interaction.followup.send(
-            f"{SPARK} mass details sent + pinned â¡",
-            ephemeral=True,
+            f"{BUTTERFLY} mass details sent + pinned",
+            ephemeral=False,
         )
 
         await channel.send(
@@ -258,19 +258,19 @@ class SepTimeSelect(
             discord.SelectOption(
                 label="batch",
                 value="batch",
-                description="batch separation",
+                description=None,
                 emoji=f"{BUTTERFLY}",
             ),
             discord.SelectOption(
                 label="2h",
                 value="2h",
-                description="2 hour separation",
+                description=None,
                 emoji=f"{BUTTERFLY}",
             ),
             discord.SelectOption(
                 label="5h",
                 value="5h",
-                description="5 hour separation",
+                description=None,
                 emoji=f"{BUTTERFLY}",
             ),
         ]
@@ -281,26 +281,26 @@ class SepTimeSelect(
                     discord.SelectOption(
                         label="10h",
                         value="10h",
-                        description="10 hour separation",
+                        description=None,
                         emoji=f"{BUTTERFLY}",
                     ),
                     discord.SelectOption(
                         label="20h",
                         value="20h",
-                        description="20 hour separation",
+                        description=None,
                         emoji=f"{BUTTERFLY}",
                     ),
                     discord.SelectOption(
                         label="30h",
                         value="30h",
-                        description="30 hour separation",
+                        description=None,
                         emoji=f"{BUTTERFLY}",
                     ),
                 ]
             )
 
         super().__init__(
-            placeholder=f"{BUTTERFLY} choose sep time...",
+            placeholder="♡ choose sep time...",
             options=options,
             min_values=1,
             max_values=1,
@@ -371,7 +371,7 @@ class MassStartView(
         )
 
     @discord.ui.button(
-        label=f"{BUTTERFLY} start",
+        label="♡ start",
         style=discord.ButtonStyle.success,
         custom_id="mass:start",
     )
@@ -481,7 +481,7 @@ class Mass(commands.Cog):
 
     @app_commands.command(
         name="mass",
-        description="Start the Mass process."
+        description="♡ Start the Mass process :D"
     )
     async def mass(
         self,
@@ -542,16 +542,17 @@ class Mass(commands.Cog):
             )
 
             embed = discord.Embed(
-                title=" mass setup ",
-                description=("choose your separation time below.\n\n"
-                    "**available:**\n"
-                    " `batch`\n"
-                    " `2h`\n"
-                    " `5h`"
+                title="♡ Get started !!",
+                description=("choose ur sep time\n"
+                             "-# have ur ad ready before choosing :3\n\n\n"
+                    "` ♡ avb: `\n"
+                    "-# batch\n"
+                    "-# 2h\n"
+                    "-# 5h"
                     f"{extra}\n\n"
-                    f"your level: **{level}/5**"
+                    f"ur mass lvl is: ` {level}/5 `"
                 ),
-                color=0xFF9FCC,
+                color=0x393A41,
             )
 
             await interaction.followup.send(

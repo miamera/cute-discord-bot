@@ -259,19 +259,19 @@ class SepTimeSelect(
                 label="batch",
                 value="batch",
                 description="batch separation",
-                emoji="â¡",
+                emoji=f"{BUTTERFLY}",
             ),
             discord.SelectOption(
                 label="2h",
                 value="2h",
                 description="2 hour separation",
-                emoji="â¡",
+                emoji=f"{BUTTERFLY}",
             ),
             discord.SelectOption(
                 label="5h",
                 value="5h",
                 description="5 hour separation",
-                emoji="â¡",
+                emoji=f"{BUTTERFLY}",
             ),
         ]
 
@@ -282,25 +282,25 @@ class SepTimeSelect(
                         label="10h",
                         value="10h",
                         description="10 hour separation",
-                        emoji="à­¨à­§",
+                        emoji=f"{BUTTERFLY}",
                     ),
                     discord.SelectOption(
                         label="20h",
                         value="20h",
                         description="20 hour separation",
-                        emoji="à­¨à­§",
+                        emoji=f"{BUTTERFLY}",
                     ),
                     discord.SelectOption(
                         label="30h",
                         value="30h",
                         description="30 hour separation",
-                        emoji="à­¨à­§",
+                        emoji=f"{BUTTERFLY}",
                     ),
                 ]
             )
 
         super().__init__(
-            placeholder="à­¨à­§ choose sep time...",
+            placeholder=f"{BUTTERFLY} choose sep time...",
             options=options,
             min_values=1,
             max_values=1,
@@ -371,7 +371,7 @@ class MassStartView(
         )
 
     @discord.ui.button(
-        label="â¡ start",
+        label=f"{BUTTERFLY} start",
         style=discord.ButtonStyle.success,
         custom_id="mass:start",
     )
@@ -535,21 +535,19 @@ class Mass(commands.Cog):
             )
 
             extra = (
-                "\n\nà­¨à­§ **level 5+ unlocked:** "
-                "`10h` â¢ `20h` â¢ `30h`"
+                "\n\n **level 5+ unlocked:** "
+                "`10h`  `20h`  `30h`"
                 if level >= 5
                 else ""
             )
 
             embed = discord.Embed(
-                title="à­¨à­§ â¡ mass setup â¡ à­¨à­§",
-                description=(
-                    "âËâ¹â¡âËâ¹â¡âËâ¹â¡âËâ¹\n\n"
-                    "choose your separation time below.\n\n"
+                title=" mass setup ",
+                description=("choose your separation time below.\n\n"
                     "**available:**\n"
-                    "â¡ `batch`\n"
-                    "â¡ `2h`\n"
-                    "â¡ `5h`"
+                    " `batch`\n"
+                    " `2h`\n"
+                    " `5h`"
                     f"{extra}\n\n"
                     f"your level: **{level}/5**"
                 ),

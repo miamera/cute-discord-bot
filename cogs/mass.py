@@ -235,7 +235,7 @@ class MassInfoModal(discord.ui.Modal):
 
         await interaction.followup.send(
             f"{BUTTERFLY} mass details sent + pinned",
-            ephemeral=False,
+            ephemeral=True,
         )
 
         await channel.send(
@@ -535,8 +535,10 @@ class Mass(commands.Cog):
             )
 
             extra = (
-                "\n\n **level 5+ unlocked:** "
-                "`10h`  `20h`  `30h`"
+                "\n\n ` level 5+ unlocked! `"
+                "-# 10h\n"
+                "-# 20h\n"
+                "-# 30h"
                 if level >= 5
                 else ""
             )

@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import asyncio
 
 from config import TICKET_FILE
 from utils.storage import load_json
@@ -324,6 +325,27 @@ class SepTimeSelect(
                 sep_time=selected,
                 owner_id=self.owner_id,
             )
+        )
+
+        async def reset_menu():
+            await asyncio.sleep(0.3)
+
+            try:
+                await interaction.message.edit(
+                    view=MassSetupView(
+                        owner_id=self.owner_id,
+                        level=self.level,
+                    )
+                )
+            except (
+                discord.NotFound,
+                discord.Forbidden,
+                discord.HTTPException,
+            ):
+                pass
+
+        asyncio.create_task(
+            reset_menu()
         )
 
 

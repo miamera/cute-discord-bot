@@ -66,24 +66,33 @@ def is_mass_ticket(
     if interaction.guild is None:
         return False
 
+    channel = interaction.channel
+
+    # First use the saved ticket record when available.
     ticket = get_current_ticket(
-        interaction.channel.id
+        channel.id
     )
 
     if ticket:
-        return (
-            ticket.get("ticket_type")
-            == "mass"
-        )
+        ticket_type = str(
+            ticket.get(
+                "ticket_type",
+                ""
+            )
+        ).lower().strip()
 
-    # Fallback for existing/older tickets.
+        if ticket_type == "mass":
+            return True
+
+    # Reliable fallback for Mass tickets.
+    # Mass tickets are created as `m username`
+    # inside the Mass ticket category.
     if (
-        interaction.channel.category_id
+        channel.category_id
         == MASS_TICKET_CATEGORY_ID
+        and channel.name.lower().startswith("m ")
     ):
-        return interaction.channel.name.startswith(
-            "m "
-        )
+        return True
 
     return False
 

@@ -15,7 +15,7 @@ from utils.variables import build_variables, replace_variables
 # │              ♡ cute auto responders ♡        │
 # ╰──────────────────────────────────────────────╯
 
-SPARK = "<a:00_spark:1547846651790626907>"
+SPARK = "<<:z_0001:1551608220664201247>"
 
 PINK = 0xFF9FCC
 LIGHT_PINK = 0xFFD6E8

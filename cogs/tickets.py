@@ -18,18 +18,18 @@ TRANSCRIPT_CHANNEL_ID = 1548952234790883399
 
 MAX_TICKETS_PER_TYPE = 3
 
-SPARK = "<a:00_spark:1547846651790626907>"
+LOOP = "<:z_0001:1551608220664201247>"
 
 BUTTERFLY = "<:4butterfly:1547846639312699473>"
 LEFT_WING = "<a:xwingleft:1549545518512865373>"
 RIGHT_WING = "<a:xwingright:1549545512309624912>"
 KAMOJIS = "<:kamojis:1549545521960714270>"
 
-MASS_EMOJI = "<:4butterfly:1547846639312699473>"
-HIRE_EMOJI = "<:4butterfly:1547846639312699473>"
+MASS_EMOJI = "<:acat_symbol:1551608452588240978>"
+HIRE_EMOJI = "<a:z_heart:1551608235880878181>"
 
-MASS_OPENING = "` .mass ` <:kamojis:1549545521960714270>"
-HIRE_OPENING = "` .hire ` <:kamojis:1549545521960714270>"
+MASS_OPENING = "` /mass ` <:kamojis:1549545521960714270>"
+HIRE_OPENING = "` /hire ` <:kamojis:1549545521960714270>"
 
 
 # ── panel images ──────────────────────────────────────────────
@@ -135,16 +135,10 @@ def clean_ticket_records(guild: discord.Guild):
 
 
 def get_ticket_type_from_name(channel_name: str):
-    if channel_name.startswith("m "):
+    if channel_name.startswith("m-"):
         return "mass"
 
-    if channel_name.startswith("h "):
-        return "hire"
-
-    if channel_name.startswith("m𑣲"):
-        return "mass"
-
-    if channel_name.startswith("h𑣲"):
+    if channel_name.startswith("h-"):
         return "hire"
 
     return None
@@ -380,7 +374,7 @@ class Tickets(commands.Cog):
 
     @app_commands.command(
         name="mia",
-        description="Send the ticket panel.",
+        description="admin only cmd",
     )
     @app_commands.checks.has_permissions(
         manage_channels=True,
@@ -399,7 +393,7 @@ class Tickets(commands.Cog):
 
         if channel is None:
             await interaction.followup.send(
-                f"{SPARK} I couldn't find the ticket panel channel.",
+                f"{LOOP} I couldn't find the ticket panel channel.",
                 ephemeral=True,
             )
             return
@@ -423,7 +417,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} the ticket panel has been sent.",
+                f"{LOOP} the ticket panel has been sent.",
                 ephemeral=True,
             )
 
@@ -434,7 +428,7 @@ class Tickets(commands.Cog):
         except discord.Forbidden:
 
             await interaction.followup.send(
-                f"{SPARK} I don't have permission "
+                f"{LOOP} I don't have permission "
                 "to send messages there.",
                 ephemeral=True,
             )
@@ -447,7 +441,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} Discord rejected the panel.",
+                f"{LOOP} Discord rejected the panel.",
                 ephemeral=True,
             )
 
@@ -459,7 +453,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} something went wrong.",
+                f"{LOOP} something went wrong.",
                 ephemeral=True,
             )
 
@@ -484,14 +478,14 @@ class Tickets(commands.Cog):
 
         if not isinstance(channel, discord.TextChannel) or guild is None:
             await interaction.response.send_message(
-                f"{SPARK} this command can only be used inside a ticket.",
+                f"{LOOP} oops! u can only use this in a ticket!",
                 ephemeral=True,
             )
             return
 
         if not self.is_staff(interaction.user):
             await interaction.response.send_message(
-                f"{SPARK} only staff can use this command.",
+                f"{LOOPS} AH! This is a staff ONLY cmd! :o",
                 ephemeral=True,
             )
             return
@@ -502,7 +496,7 @@ class Tickets(commands.Cog):
         if ticket_type != expected_type:
             label = "Mass" if expected_type == "mass" else "Hire"
             await interaction.response.send_message(
-                f"{SPARK} this command can only be used in a {label} ticket.",
+                f"{LOOP} this command can only be used in a {label} ticket.",
                 ephemeral=True,
             )
             return
@@ -554,7 +548,7 @@ class Tickets(commands.Cog):
 
         if not transcript_sent:
             await interaction.followup.send(
-                f"{SPARK} the transcript could not be saved, so the ticket was not completed.",
+                f"{LOOP} the transcript could not be saved, so the ticket was not completed.",
                 ephemeral=True,
             )
             return
@@ -583,8 +577,8 @@ class Tickets(commands.Cog):
             else:
                 data["hire_completed"][user_key] = True
                 dm_message = (
-                    f"{BUTTERFLY}  **Ty for hiring Mia**\n"
-                    f"-# If you’d like to leave a review please use ` /rev ` here"
+                    f"{BUTTERFLY}  **thnks for hiring mia!!**\n"
+                    f"-# if you’d like to leave a review please use ` /rev ` here"
                 )
 
             save_ticket_data(data)
@@ -600,14 +594,14 @@ class Tickets(commands.Cog):
             )
         except discord.Forbidden:
             await interaction.followup.send(
-                f"{SPARK} I don't have permission to delete this ticket.",
+                f"{LOOP} I don't have permission to delete this ticket.",
                 ephemeral=True,
             )
             return
         except discord.HTTPException as error:
             print(f"Ticket delete error: {type(error).__name__}: {error}")
             await interaction.followup.send(
-                f"{SPARK} Discord rejected the ticket deletion.",
+                f"{LOOP} Discord rejected the ticket deletion.",
                 ephemeral=True,
             )
             return
@@ -663,14 +657,14 @@ class Tickets(commands.Cog):
 
         if guild is None:
             await interaction.response.send_message(
-                f"{SPARK} tickets can only be opened inside a server.",
+                f"{LOOP} tickets can only be opened inside a server.",
                 ephemeral=True,
             )
             return
 
         if not isinstance(member, discord.Member):
             await interaction.response.send_message(
-                f"{SPARK} I couldn't find your server membership.",
+                f"{LOOP} I couldn't find your server membership.",
                 ephemeral=True,
             )
             return
@@ -684,14 +678,14 @@ class Tickets(commands.Cog):
             discord.CategoryChannel,
         ):
             await interaction.response.send_message(
-                f"{SPARK} I couldn't find the ticket category.",
+                f"{LOOP} I couldn't find the ticket category.",
                 ephemeral=True,
             )
             return
 
         if ticket_type not in ("mass", "hire"):
             await interaction.response.send_message(
-                f"{SPARK} invalid ticket type.",
+                f"{LOOP} invalid ticket type.",
                 ephemeral=True,
             )
             return
@@ -722,7 +716,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.response.send_message(
-                f"{SPARK} you already have the maximum "
+                f"{LOOP} you already have the maximum "
                 f"of **{MAX_TICKETS_PER_TYPE} {ticket_word} tickets**.",
                 ephemeral=True,
             )
@@ -731,9 +725,9 @@ class Tickets(commands.Cog):
         username = member.name
 
         if ticket_type == "mass":
-            channel_name = f"m {username}"
+            channel_name = f"m-{username}"
         else:
-            channel_name = f"h {username}"
+            channel_name = f"h-{username}"
 
         channel_name = channel_name[:100]
 
@@ -741,14 +735,14 @@ class Tickets(commands.Cog):
 
         if bot_member is None:
             await interaction.response.send_message(
-                f"{SPARK} I couldn't find my server permissions.",
+                f"{LOOP} I couldn't find my server permissions.",
                 ephemeral=True,
             )
             return
 
         if not bot_member.guild_permissions.manage_channels:
             await interaction.response.send_message(
-                f"{SPARK} I need **Manage Channels** to create tickets.",
+                f"{LOOP} I need **Manage Channels** to create tickets.",
                 ephemeral=True,
             )
             return
@@ -824,7 +818,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} your ticket is ready: "
+                f"{LOOP} your ticket is ready: "
                 f"{ticket_channel.mention}",
                 ephemeral=True,
             )
@@ -859,7 +853,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} I don't have enough permissions "
+                f"{LOOP} I don't have enough permissions "
                 "to create the ticket.",
                 ephemeral=True,
             )
@@ -872,7 +866,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} Discord rejected the ticket.",
+                f"{LOOP} Discord rejected the ticket.",
                 ephemeral=True,
             )
 
@@ -884,7 +878,7 @@ class Tickets(commands.Cog):
             )
 
             await interaction.followup.send(
-                f"{SPARK} something went wrong creating "
+                f"{LOOP} something went wrong creating "
                 "the ticket.",
                 ephemeral=True,
             )

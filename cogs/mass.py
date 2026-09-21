@@ -8,7 +8,7 @@ from utils.storage import load_json
 
 
 BUTTERFLY = "<:4butterfly:1547846639312699473>"
-SPARK = "<a:00_spark:1547846651790626907>"
+SPARK = "<:z_0001:1551608220664201247>"
 
 MASS_TICKET_CATEGORY_ID = 1549007825198387312
 
@@ -91,7 +91,7 @@ def is_mass_ticket(
     if (
         channel.category_id
         == MASS_TICKET_CATEGORY_ID
-        and channel.name.lower().startswith("m")
+        and channel.name.lower().startswith("m-")
     ):
         return True
 
@@ -123,7 +123,7 @@ class MassInfoModal(discord.ui.Modal):
         owner_id: int,
     ):
         super().__init__(
-            title="𓏲     ﹕  details"
+            title=f"{SPARK}     ﹕  details"
         )
 
         self.sep_time = sep_time
@@ -131,7 +131,7 @@ class MassInfoModal(discord.ui.Modal):
 
         self.ad = discord.ui.TextInput(
             label="ad",
-            placeholder="♡ paste the ad here...",
+            placeholder="♡ paste ad here...",
             style=discord.TextStyle.paragraph,
             required=True,
             max_length=2000,
@@ -235,7 +235,7 @@ class MassInfoModal(discord.ui.Modal):
                 pass
 
         await interaction.followup.send(
-            f"{BUTTERFLY} mass details sent + pinned",
+            f"{SPARK} mass details sent + pinned\n\n-# click start when u are ready to start posting",
             ephemeral=True,
         )
 
@@ -266,7 +266,7 @@ class SepTimeSelect(
                 label="2h",
                 value="2h",
                 description=None,
-                emoji=f"{BUTTERFLY}",
+                emoji=f"{SPARK}",
             ),
             discord.SelectOption(
                 label="5h",
@@ -283,7 +283,7 @@ class SepTimeSelect(
                         label="10h",
                         value="10h",
                         description=None,
-                        emoji=f"{BUTTERFLY}",
+                        emoji=f"{SPARK}",
                     ),
                     discord.SelectOption(
                         label="20h",
@@ -295,7 +295,7 @@ class SepTimeSelect(
                         label="30h",
                         value="30h",
                         description=None,
-                        emoji=f"{BUTTERFLY}",
+                        emoji=f"{SPARK}",
                     ),
                 ]
             )
@@ -557,7 +557,7 @@ class Mass(commands.Cog):
             )
 
             extra = (
-                "\n\n ` level 5+ unlocked! `"
+                "\n\n ` earned seps ! `\n"
                 "-# 10h\n"
                 "-# 20h\n"
                 "-# 30h"

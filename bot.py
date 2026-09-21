@@ -46,6 +46,7 @@ class CuteBot(commands.Bot):
         extensions = [
             "cogs.autoresponders",
             "cogs.help",
+            "cogs.levels",
             "cogs.join_ping",
             "cogs.logs",
             "cogs.mass",

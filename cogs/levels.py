@@ -12,42 +12,32 @@ DEFAULT_DATA = {
     "tickets": {},
     "mass_completed": {},
     "hire_completed": {},
+    "mass_reviews": {},
 }
 
 
 def get_mass_level(user_id: int):
     data = load_json(TICKET_FILE, DEFAULT_DATA)
-
     completed = int(
         data.get("mass_completed", {}).get(str(user_id), 0)
     )
-
     return min(completed, 5)
 
 
 class Levels(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
-
-    # ── /level ───────────────────────────────────────────────
 
     @app_commands.command(
         name="level",
         description="View your Mass level."
     )
-    async def level(
-        self,
-        interaction: discord.Interaction,
-    ):
+    async def level(self, interaction: discord.Interaction):
         level = get_mass_level(interaction.user.id)
-
         await interaction.response.send_message(
             f"{SPARK} your mass level is **{level}/5**",
             ephemeral=True,
         )
-
-    # ── /resetlevel ──────────────────────────────────────────
 
     @app_commands.command(
         name="resetlevel",
@@ -56,9 +46,7 @@ class Levels(commands.Cog):
     @app_commands.describe(
         user="The user whose Mass level you want to reset."
     )
-    @app_commands.default_permissions(
-        manage_guild=True
-    )
+    @app_commands.default_permissions(manage_guild=True)
     async def resetlevel(
         self,
         interaction: discord.Interaction,
@@ -66,41 +54,27 @@ class Levels(commands.Cog):
     ):
         if interaction.guild is None:
             await interaction.response.send_message(
-                "♡ this command can only be used in a server.",
+                "â¡ this command can only be used in a server.",
                 ephemeral=True,
             )
             return
 
         if not interaction.user.guild_permissions.manage_guild:
             await interaction.response.send_message(
-                "♡ you don't have permission to use this.",
+                "â¡ you don't have permission to use this.",
                 ephemeral=True,
             )
             return
 
-        data = load_json(
-            TICKET_FILE,
-            DEFAULT_DATA,
-        )
-
-        mass_completed = data.setdefault(
-            "mass_completed",
-            {}
-        )
-
+        data = load_json(TICKET_FILE, DEFAULT_DATA)
+        mass_completed = data.setdefault("mass_completed", {})
         mass_completed[str(user.id)] = 0
-
-        save_json(
-            TICKET_FILE,
-            data,
-        )
+        save_json(TICKET_FILE, data)
 
         await interaction.response.send_message(
             f"{SPARK} reset {user.mention}'s Mass level to **0/5**.",
             ephemeral=True,
         )
-
-    # ── /removelevel ─────────────────────────────────────────
 
     @app_commands.command(
         name="removelevel",
@@ -109,9 +83,7 @@ class Levels(commands.Cog):
     @app_commands.describe(
         user="The user whose Mass level you want to lower."
     )
-    @app_commands.default_permissions(
-        manage_guild=True
-    )
+    @app_commands.default_permissions(manage_guild=True)
     async def removelevel(
         self,
         interaction: discord.Interaction,
@@ -119,46 +91,86 @@ class Levels(commands.Cog):
     ):
         if interaction.guild is None:
             await interaction.response.send_message(
-                "♡ this command can only be used in a server.",
+                "â¡ this command can only be used in a server.",
                 ephemeral=True,
             )
             return
 
         if not interaction.user.guild_permissions.manage_guild:
             await interaction.response.send_message(
-                "♡ you don't have permission to use this.",
+                "â¡ you don't have permission to use this.",
                 ephemeral=True,
             )
             return
 
-        data = load_json(
-            TICKET_FILE,
-            DEFAULT_DATA,
-        )
-
-        mass_completed = data.setdefault(
-            "mass_completed",
-            {}
-        )
-
+        data = load_json(TICKET_FILE, DEFAULT_DATA)
+        mass_completed = data.setdefault("mass_completed", {})
         user_id = str(user.id)
-
-        current = int(
-            mass_completed.get(user_id, 0)
-        )
-
+        current = int(mass_completed.get(user_id, 0))
         new_level = max(current - 1, 0)
-
         mass_completed[user_id] = new_level
-
-        save_json(
-            TICKET_FILE,
-            data,
-        )
+        save_json(TICKET_FILE, data)
 
         await interaction.response.send_message(
             f"{SPARK} removed 1 Mass level from "
-            f"{user.mention} → **{min(new_level, 5)}/5**.",
+            f"{user.mention} â **{min(new_level, 5)}/5**.",
+            ephemeral=True,
+        )
+
+    add = app_commands.Group(
+        name="add",
+        description="Add Mass levels to a user."
+    )
+
+    @add.command(
+        name="level",
+        description="Add Mass levels to a user."
+    )
+    @app_commands.describe(
+        user="The user who should receive the level(s).",
+        amount="How many levels to add."
+    )
+    @app_commands.default_permissions(manage_guild=True)
+    async def add_level(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+        amount: app_commands.Range[int, 1, 5] = 1,
+    ):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "â¡ this command can only be used in a server.",
+                ephemeral=True,
+            )
+            return
+
+        if not interaction.user.guild_permissions.manage_guild:
+            await interaction.response.send_message(
+                "â¡ you don't have permission to use this.",
+                ephemeral=True,
+            )
+            return
+
+        data = load_json(TICKET_FILE, DEFAULT_DATA)
+        mass_completed = data.setdefault("mass_completed", {})
+        user_id = str(user.id)
+        current = int(mass_completed.get(user_id, 0))
+        new_level = min(current + amount, 5)
+        actual_added = new_level - current
+        mass_completed[user_id] = new_level
+        save_json(TICKET_FILE, data)
+
+        if actual_added == 0:
+            await interaction.response.send_message(
+                f"{SPARK} {user.mention} is already at **5/5**.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            f"{SPARK} added **{actual_added}** Mass level"
+            f"{'s' if actual_added != 1 else ''} to "
+            f"{user.mention} â **{new_level}/5**.",
             ephemeral=True,
         )
 

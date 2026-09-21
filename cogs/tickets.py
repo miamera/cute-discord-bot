@@ -21,6 +21,9 @@ MAX_TICKETS_PER_TYPE = 3
 SPARK = "<a:00_spark:1547846651790626907>"
 
 BUTTERFLY = "<:4butterfly:1547846639312699473>"
+LEFT_WING = "<a:xwingleft:1549545518512865373>"
+RIGHT_WING = "<a:xwingright:1549545512309624912>"
+KAMOJIS = "<:kamojis:1549545521960714270>"
 
 MASS_EMOJI = "<:4butterfly:1547846639312699473>"
 HIRE_EMOJI = "<:4butterfly:1547846639312699473>"
@@ -263,321 +266,6 @@ def safe_filename(name: str):
     return name[:80] or "ticket"
 
 
-# ── close ticket button ───────────────────────────────────────
-
-class CloseTicketView(discord.ui.View):
-
-    def __init__(self, cog=None):
-        super().__init__(timeout=None)
-        self.cog = cog
-
-    @discord.ui.button(
-        label="c",
-        style=discord.ButtonStyle.secondary,
-        custom_id="ticket_close",
-    )
-    async def close_ticket(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button,
-    ):
-        channel = interaction.channel
-
-        if not isinstance(channel, discord.TextChannel):
-            await interaction.response.send_message(
-                f"{SPARK} this isn't a ticket channel.",
-                ephemeral=True,
-            )
-            return
-
-        guild = interaction.guild
-
-        if guild is None:
-            await interaction.response.send_message(
-                f"{SPARK} this isn't inside a server.",
-                ephemeral=True,
-            )
-            return
-
-        record = get_ticket_record(channel.id)
-
-        opener = await find_ticket_opener(
-            channel,
-            guild,
-        )
-
-        # ── closing permissions ──────────────────────────
-
-        is_opener = (
-            opener is not None
-            and interaction.user.id == opener.id
-        )
-
-        is_staff = (
-            isinstance(
-                interaction.user,
-                discord.Member,
-            )
-            and interaction.user.guild_permissions.manage_channels
-        )
-
-        if not is_opener and not is_staff:
-
-            await interaction.response.send_message(
-                f"{SPARK} only the ticket opener or staff "
-                "can close this ticket.",
-                ephemeral=True,
-            )
-            return
-
-        await interaction.response.defer(
-            ephemeral=True
-        )
-
-        ticket_name = channel.name
-
-        if record:
-            ticket_type = record.get("ticket_type")
-        else:
-            ticket_type = get_ticket_type_from_name(
-                channel.name
-            )
-
-        if ticket_type not in ("mass", "hire"):
-            ticket_type = "hire"
-
-        # ── fetch full transcript ─────────────────────────
-
-        try:
-
-            messages = [
-                message
-                async for message in channel.history(
-                    limit=None,
-                    oldest_first=True,
-                )
-            ]
-
-            transcript_text = build_transcript_text(
-                messages
-            )
-
-        except discord.HTTPException as error:
-
-            print(
-                f"Transcript fetch error: "
-                f"{type(error).__name__}: {error}"
-            )
-
-            transcript_text = (
-                "Unable to retrieve the full ticket history."
-            )
-
-        # ── transcript channel ───────────────────────────
-
-        transcript_channel = guild.get_channel(
-            TRANSCRIPT_CHANNEL_ID
-        )
-
-        transcript_sent = False
-
-        if isinstance(
-            transcript_channel,
-            discord.TextChannel,
-        ):
-
-            opener_text = (
-                opener.mention
-                if opener
-                else "Unknown"
-            )
-
-            closer_text = interaction.user.mention
-
-            header = (
-                f"{BUTTERFLY}  **Ticket Transcript**\n"
-                f"Ticket: {ticket_name}\n"
-                f"Opened by: {opener_text}\n"
-                f"Closed by: {closer_text}"
-            )
-
-            transcript_file = discord.File(
-                io.BytesIO(
-                    transcript_text.encode(
-                        "utf-8"
-                    )
-                ),
-                filename=(
-                    f"{safe_filename(ticket_name)}.txt"
-                ),
-            )
-
-            try:
-
-                await transcript_channel.send(
-                    content=header,
-                    file=transcript_file,
-                )
-
-                transcript_sent = True
-
-            except discord.HTTPException as error:
-
-                print(
-                    f"Transcript send error: "
-                    f"{type(error).__name__}: {error}"
-                )
-
-        else:
-
-            print(
-                "Transcript channel could not be found."
-            )
-
-        # ── completion tracking / DM ──────────────────────
-
-        dm_sent = False
-
-        if opener:
-
-            data = load_ticket_data()
-            user_key = str(opener.id)
-
-            if ticket_type == "mass":
-
-                completed = int(
-                    data["mass_completed"].get(
-                        user_key,
-                        0,
-                    )
-                )
-
-                completed += 1
-
-                data["mass_completed"][user_key] = (
-                    completed
-                )
-
-                save_ticket_data(data)
-
-                level = min(
-                    completed,
-                    5,
-                )
-
-                dm_message = (
-                    f"{BUTTERFLY}  **Ty for massing w/ Mia**\n"
-                    f"-# You’re {level}/5 masses away "
-                    f"from unlocking earned seps"
-                )
-
-            else:
-
-                # A Hire ticket only unlocks /rev AFTER
-                # its transcript was successfully saved.
-                if transcript_sent:
-
-                    data["hire_completed"][user_key] = True
-
-                    save_ticket_data(data)
-
-                dm_message = (
-                    f"{BUTTERFLY}  **Ty for hiring Mia**\n"
-                    f"-# If you’d like to leave a review "
-                    f"please use ` /rev ` here"
-                )
-
-            try:
-
-                await opener.send(
-                    dm_message
-                )
-
-                dm_sent = True
-
-            except discord.Forbidden:
-
-                print(
-                    f"Could not DM ticket opener "
-                    f"{opener} — DMs are closed."
-                )
-
-            except discord.HTTPException as error:
-
-                print(
-                    f"Ticket opener DM error: "
-                    f"{type(error).__name__}: {error}"
-                )
-
-        # ── delete ticket ────────────────────────────────
-
-        try:
-
-            await channel.delete(
-                reason=(
-                    f"Ticket closed by "
-                    f"{interaction.user}"
-                ),
-            )
-
-        except discord.Forbidden:
-
-            await interaction.followup.send(
-                f"{SPARK} I don't have permission "
-                "to delete this ticket.",
-                ephemeral=True,
-            )
-            return
-
-        except discord.HTTPException as error:
-
-            print(
-                f"Ticket delete error: "
-                f"{type(error).__name__}: {error}"
-            )
-
-            await interaction.followup.send(
-                f"{SPARK} Discord rejected the ticket deletion.",
-                ephemeral=True,
-            )
-            return
-
-        # ── remove active ticket record ──────────────────
-
-        data = load_ticket_data()
-
-        data["tickets"].pop(
-            str(channel.id),
-            None,
-        )
-
-        save_ticket_data(data)
-
-        status = []
-
-        if transcript_sent:
-            status.append("transcript saved")
-
-        if dm_sent:
-            status.append("DM sent")
-
-        status_text = (
-            " • ".join(status)
-            if status
-            else "ticket closed"
-        )
-
-        try:
-
-            await interaction.followup.send(
-                f"{SPARK} {status_text}.",
-                ephemeral=True,
-            )
-
-        except discord.HTTPException:
-            pass
-
-
 # ── ticket select menu ────────────────────────────────────────
 
 class TicketSelect(discord.ui.Select):
@@ -687,9 +375,6 @@ class Tickets(commands.Cog):
             InfoButtonsView()
         )
 
-        self.bot.add_view(
-            CloseTicketView(self)
-        )
 
     # ── /mia ──────────────────────────────────────────────────
 
@@ -777,6 +462,193 @@ class Tickets(commands.Cog):
                 f"{SPARK} something went wrong.",
                 ephemeral=True,
             )
+
+    # ── completion helpers ────────────────────────────────────
+
+    STAFF_ROLE_ID = 1543013104407945276
+    MASS_REVIEW_WINDOW_HOURS = 24
+
+    def is_staff(self, member):
+        return (
+            isinstance(member, discord.Member)
+            and any(role.id == self.STAFF_ROLE_ID for role in member.roles)
+        )
+
+    async def complete_ticket(
+        self,
+        interaction: discord.Interaction,
+        expected_type: str,
+    ):
+        channel = interaction.channel
+        guild = interaction.guild
+
+        if not isinstance(channel, discord.TextChannel) or guild is None:
+            await interaction.response.send_message(
+                f"{SPARK} this command can only be used inside a ticket.",
+                ephemeral=True,
+            )
+            return
+
+        if not self.is_staff(interaction.user):
+            await interaction.response.send_message(
+                f"{SPARK} only staff can use this command.",
+                ephemeral=True,
+            )
+            return
+
+        record = get_ticket_record(channel.id)
+        ticket_type = record.get("ticket_type") if record else get_ticket_type_from_name(channel.name)
+
+        if ticket_type != expected_type:
+            label = "Mass" if expected_type == "mass" else "Hire"
+            await interaction.response.send_message(
+                f"{SPARK} this command can only be used in a {label} ticket.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True)
+
+        opener = await find_ticket_opener(channel, guild)
+        ticket_name = channel.name
+
+        try:
+            messages = [
+                message async for message in channel.history(
+                    limit=None,
+                    oldest_first=True,
+                )
+            ]
+            transcript_text = build_transcript_text(messages)
+        except discord.HTTPException as error:
+            print(f"Transcript fetch error: {type(error).__name__}: {error}")
+            transcript_text = "Unable to retrieve the full ticket history."
+
+        transcript_channel = guild.get_channel(TRANSCRIPT_CHANNEL_ID)
+        transcript_sent = False
+
+        if isinstance(transcript_channel, discord.TextChannel):
+            opener_text = opener.mention if opener else "Unknown"
+            header = (
+                f"{BUTTERFLY}  **Ticket Transcript**\n"
+                f"Ticket: {ticket_name}\n"
+                f"Opened by: {opener_text}\n"
+                f"Closed by: {interaction.user.mention}"
+            )
+
+            transcript_file = discord.File(
+                io.BytesIO(transcript_text.encode("utf-8")),
+                filename=f"{safe_filename(ticket_name)}.txt",
+            )
+
+            try:
+                await transcript_channel.send(
+                    content=header,
+                    file=transcript_file,
+                )
+                transcript_sent = True
+            except discord.HTTPException as error:
+                print(f"Transcript send error: {type(error).__name__}: {error}")
+        else:
+            print("Transcript channel could not be found.")
+
+        if not transcript_sent:
+            await interaction.followup.send(
+                f"{SPARK} the transcript could not be saved, so the ticket was not completed.",
+                ephemeral=True,
+            )
+            return
+
+        data = load_ticket_data()
+        user_key = str(opener.id) if opener else None
+
+        if user_key:
+            if expected_type == "mass":
+                completed = int(data["mass_completed"].get(user_key, 0)) + 1
+                data["mass_completed"][user_key] = completed
+
+                review_entries = data.setdefault("mass_reviews", {})
+                user_entries = review_entries.setdefault(user_key, [])
+                user_entries.append({
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "used": False,
+                })
+
+                level = min(completed, 5)
+                dm_message = (
+                    f"{LEFT_WING} {RIGHT_WING}  **thnks for massing w mia!!** {KAMOJIS}\n"
+                    f"-# you’re ` {level}/5 ` masses away from earned seps *!*\n\n"
+                    f"-# <:mia:1546285483573776526> **` /mrev ` to leave a kind review :3**"
+                )
+            else:
+                data["hire_completed"][user_key] = True
+                dm_message = (
+                    f"{BUTTERFLY}  **Ty for hiring Mia**\n"
+                    f"-# If you’d like to leave a review please use ` /rev ` here"
+                )
+
+            save_ticket_data(data)
+
+            try:
+                await opener.send(dm_message)
+            except (discord.Forbidden, discord.HTTPException) as error:
+                print(f"Ticket opener DM error: {type(error).__name__}: {error}")
+
+        try:
+            await channel.delete(
+                reason=f"{expected_type.title()} ticket completed by {interaction.user}",
+            )
+        except discord.Forbidden:
+            await interaction.followup.send(
+                f"{SPARK} I don't have permission to delete this ticket.",
+                ephemeral=True,
+            )
+            return
+        except discord.HTTPException as error:
+            print(f"Ticket delete error: {type(error).__name__}: {error}")
+            await interaction.followup.send(
+                f"{SPARK} Discord rejected the ticket deletion.",
+                ephemeral=True,
+            )
+            return
+
+        data = load_ticket_data()
+        data["tickets"].pop(str(channel.id), None)
+        save_ticket_data(data)
+
+    # ── /complete mass ────────────────────────────────────────
+
+    complete = app_commands.Group(
+        name="complete",
+        description="Complete a ticket.",
+    )
+
+    @complete.command(
+        name="mass",
+        description="Complete a Mass ticket.",
+    )
+    async def complete_mass(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await self.complete_ticket(interaction, "mass")
+
+    # ── /finish plan ──────────────────────────────────────────
+
+    finish = app_commands.Group(
+        name="finish",
+        description="Finish a ticket.",
+    )
+
+    @finish.command(
+        name="plan",
+        description="Finish a Hire ticket.",
+    )
+    async def finish_plan(
+        self,
+        interaction: discord.Interaction,
+    ):
+        await self.complete_ticket(interaction, "hire")
 
     # ── create ticket ─────────────────────────────────────────
 
@@ -949,7 +821,6 @@ class Tickets(commands.Cog):
 
             await ticket_channel.send(
                 content=opening_message,
-                view=CloseTicketView(self),
             )
 
             await interaction.followup.send(
